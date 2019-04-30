@@ -119,6 +119,24 @@ void set_default_parameters(LEARN_PARM *learn_parm, KERNEL_PARM *kernel_parm)
 //------- SVM default parameters -------------------//
 
 
+// Copy feature added by Garrett Nicolai, February, 2014.
+// The copy feature is a single feature that determines whether
+// an operation maps x to x, ie. if it simply copies the characters
+// on the left-hand side to the right-hand side.
+// It was inspired by a similar feature mentioned in 
+// "A global model for joint lemmatization and part-of-speech prediction"
+// by Kristina Toutanova and Colin Cherry, ACL 2009
+
+// LM feature added by Garrett Nicolai, June, 2017
+// Using a language model learned elsewhere, and stored
+// in arpa format, extract a number of features
+// related to the likelihood of the thus-far-generated
+// candidate.  Rather than use normalized log-likelihood,
+// we bin the likelihood in order to maintain an all-binary
+// feature set.
+// Most log-likelihoods of this type seem to fall between
+// -0.5 and -1.5, which allows us to create 10 bins.
+
 phraseModel::phraseModel(void)
 {
 }
@@ -243,7 +261,7 @@ void phraseModel::readWCFile(param &myParam, string filename, hash_string_double
 		if (normalizer == 0.0 && count > 275000)
 		{
 			normalizer = count / 275000; //Tuning found this value to be best
-			//cout << "Normalizer: " << normalizer << endl;
+			cout << "Normalizer: " << normalizer << endl;
 		}
                 else if(normalizer == 0.0)
 		{
@@ -275,7 +293,7 @@ void phraseModel::readWCFile(param &myParam, string filename, hash_string_double
 			}
 				
 			
-			WLCounts[prefix] = WLCounts[prefix] + (count * i);// * (i / trueLength)); //Normalization removed
+			WLCounts[prefix] = WLCounts[prefix] + (count);// * (i / trueLength)); //Normalization removed
                         
 		}
 
@@ -283,7 +301,7 @@ void phraseModel::readWCFile(param &myParam, string filename, hash_string_double
 		{
 			WLCounts["<w>" + parts[1] + "<\\w>"] == 0.0;
 		}
-		WLCounts["<w>" + parts[1] + "<\\w>"] = WLCounts["<w>" + parts[1] + "<\\w>"] + (count * trueLength); 
+		WLCounts["<w>" + parts[1] + "<\\w>"] = WLCounts["<w>" + parts[1] + "<\\w>"] + count; 
 
 
 
@@ -421,10 +439,10 @@ void phraseModel::readLMFile(param &myParam, string filename, hash_string_double
         std::ostringstream str4;
         str4 << probability4;
 
-	//cout << "Pies: " << str1.str() << endl;
-	//cout << "Piers: " << str2.str() << endl;
-	//cout << "Pierce: " << str3.str() << endl;
-	//cout << "Piuss: " << str4.str() << endl;	
+	cout << "Pies: " << str1.str() << endl;
+	cout << "Piers: " << str2.str() << endl;
+	cout << "Pierce: " << str3.str() << endl;
+	cout << "Piuss: " << str4.str() << endl;	
 	
 	return;
 
